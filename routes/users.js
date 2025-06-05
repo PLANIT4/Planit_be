@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -26,6 +27,14 @@ router.post('/', async (req, res) => {
         [user_name, email, password]
     );
     res.json({ id: result.insertId, user_name, email });
+=======
+var express = require('express');
+var router = express.Router();
+
+/* GET users listing. */
+router.get('/', function(req, res, next) {
+  res.send('respond with a resource');
+>>>>>>> feature/be
 });
 
 module.exports = router;

@@ -1,0 +1,16 @@
+### GET request to example server
+GET https://examples.http-client.intellij.net/get
+    ?generated-in=IntelliJ IDEA
+
+###
+###
+POST http://localhost:3000/community
+Content-Type: application/json
+
+{
+  "post_title": "교통 팁 좋아요",
+  "user_id": 2,
+  "content": "지하철이 시간 잘 맞아요",
+  "image_url": null,
+  "category": "기타"
+}

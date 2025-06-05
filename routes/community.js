@@ -27,7 +27,7 @@ router.get('/:id', async (req, res) => {
 // 게시글 작성 (JWT 기반)
 router.post('/', auth, async (req, res) => {
     const { post_title, content, image_url, category } = req.body;
-    const user_id = req.user.user_id;  // 토큰에서 추출된 user_id
+    const user_id = req.user.user_id;
 
     try {
         const [result] = await pool.query(
@@ -56,11 +56,11 @@ router.post('/:id/comments', auth, async (req, res) => {
     }
 });
 
-// 댓글 목록 조회 (정렬 없음)
+// 댓글 목록 조회 (정렬 포함)
 router.get('/:id/comments', async (req, res) => {
     try {
         const [rows] = await pool.query(
-            'SELECT * FROM comment WHERE post_id = ?',
+            'SELECT * FROM comment WHERE post_id = ? ORDER BY created_at ASC',
             [req.params.id]
         );
         res.json(rows);
@@ -69,27 +69,24 @@ router.get('/:id/comments', async (req, res) => {
     }
 });
 
-// 좋아요 누르기/취소 토글
+// 좋아요 토글
 router.post('/:id/like', auth, async (req, res) => {
     const post_id = req.params.id;
     const user_id = req.user.user_id;
 
     try {
-        // 좋아요 여부 확인
         const [rows] = await pool.query(
             'SELECT * FROM community_like WHERE post_id = ? AND user_id = ?',
             [post_id, user_id]
         );
 
         if (rows.length > 0) {
-            // 이미 좋아요 → 취소 처리
             await pool.query(
                 'DELETE FROM community_like WHERE post_id = ? AND user_id = ?',
                 [post_id, user_id]
             );
             return res.json({ message: '좋아요 취소됨' });
         } else {
-            // 좋아요 추가
             await pool.query(
                 'INSERT INTO community_like (post_id, user_id, created_at) VALUES (?, ?, NOW())',
                 [post_id, user_id]
@@ -101,7 +98,7 @@ router.post('/:id/like', auth, async (req, res) => {
     }
 });
 
-// 게시글 별 좋아요 수 조회
+// 좋아요 수 조회
 router.get('/:id/likes', async (req, res) => {
     const post_id = req.params.id;
     try {
