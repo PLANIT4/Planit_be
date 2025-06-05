@@ -8,11 +8,19 @@ const userRoutes = require('./routes/users');
 const schedulesRouter = require('./routes/schedules');
 const aiRoutes = require('./routes/ai');
 const path = require('path');
+const communityRouter = require('./routes/community');
+const tipsRouter = require('./routes/tips');
+const mainRouter = require('./routes/main');
 
 const app = express();
 app.use(cors());  // 모든 도메인 허용
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use('/community', communityRouter);
+app.use('/tips', tipsRouter);
+app.use('/main', mainRouter);
+
 // 정적 파일을 제공하는 설정 (HTML 파일 포함)
 app.get('/map', (req, res) => {
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;

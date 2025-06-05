@@ -7,8 +7,8 @@ router.get('/', async (req, res) => {
 
     try {
         const [rows] = await db.query(
-            `SELECT * FROM transportation 
-       WHERE transport_type = ? AND country = ?`,
+            `SELECT * FROM transportation
+             WHERE transport_type = ? AND country = ?`,
             [type, country]
         );
         res.json(rows);

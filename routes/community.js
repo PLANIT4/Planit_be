@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const auth = require('../middleware/authMiddleware');  // 인증 미들웨어 추가
 
-
+// 전체 게시글 조회
 router.get('/', async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM community');
@@ -12,7 +13,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-
+// 단일 게시글 조회
 router.get('/:id', async (req, res) => {
     try {
         const [rows] = await pool.query('SELECT * FROM community WHERE post_id = ?', [req.params.id]);
@@ -23,9 +24,11 @@ router.get('/:id', async (req, res) => {
     }
 });
 
+// 게시글 작성 (JWT 기반)
+router.post('/', auth, async (req, res) => {
+    const { post_title, content, image_url, category } = req.body;
+    const user_id = req.user.user_id;
 
-router.post('/', async (req, res) => {
-    const { post_title, user_id, content, image_url, category } = req.body;
     try {
         const [result] = await pool.query(
             'INSERT INTO community (post_title, user_id, content, image_url, category) VALUES (?, ?, ?, ?, ?)',
@@ -37,9 +40,11 @@ router.post('/', async (req, res) => {
     }
 });
 
+// 댓글 작성 (JWT 기반)
+router.post('/:id/comments', auth, async (req, res) => {
+    const { content } = req.body;
+    const user_id = req.user.user_id;
 
-router.post('/:id/comments', async (req, res) => {
-    const { user_id, content } = req.body;
     try {
         await pool.query(
             'INSERT INTO comment (post_id, user_id, content) VALUES (?, ?, ?)',
@@ -50,6 +55,8 @@ router.post('/:id/comments', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// 댓글 목록 조회 (정렬 포함)
 router.get('/:id/comments', async (req, res) => {
     try {
         const [rows] = await pool.query(
@@ -62,6 +69,47 @@ router.get('/:id/comments', async (req, res) => {
     }
 });
 
+// 좋아요 토글
+router.post('/:id/like', auth, async (req, res) => {
+    const post_id = req.params.id;
+    const user_id = req.user.user_id;
+
+    try {
+        const [rows] = await pool.query(
+            'SELECT * FROM community_like WHERE post_id = ? AND user_id = ?',
+            [post_id, user_id]
+        );
+
+        if (rows.length > 0) {
+            await pool.query(
+                'DELETE FROM community_like WHERE post_id = ? AND user_id = ?',
+                [post_id, user_id]
+            );
+            return res.json({ message: '좋아요 취소됨' });
+        } else {
+            await pool.query(
+                'INSERT INTO community_like (post_id, user_id, created_at) VALUES (?, ?, NOW())',
+                [post_id, user_id]
+            );
+            return res.json({ message: '좋아요 추가됨' });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 좋아요 수 조회
+router.get('/:id/likes', async (req, res) => {
+    const post_id = req.params.id;
+    try {
+        const [rows] = await pool.query(
+            'SELECT COUNT(*) AS likeCount FROM community_like WHERE post_id = ?',
+            [post_id]
+        );
+        res.json(rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 module.exports = router;
-
